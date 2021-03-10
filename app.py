@@ -60,7 +60,7 @@ class App():
         # Start/Stop Real Time Data Parsing Button #
         self.dataStartStopText = StringVar()
         self.dataStartStopText.set("Pause Data Stream")
-        self.dataStartStop = Button(self.parent, textvariable = self.dataStartStopText, command=self.dataStartStop)
+        self.dataStartStop = Button(self.parent, textvariable = self.dataStartStopText, command=self.dataStartStop_)
         self.dataStartStop.pack(side=TOP)
 
         # Serial Data Label #
@@ -108,7 +108,7 @@ class App():
             self.updatePlot(self.xarr, self.yarr, "Draguino Uno Virtual Dyno", self.fileName)
 
     # Start/Pause Serial Data Button Handler #
-    def dataStartStop(self):
+    def dataStartStop_(self):
         if (self.dataStreamState):
             self.dataStartStopText.set("Pause Data Stream")
         else: 
