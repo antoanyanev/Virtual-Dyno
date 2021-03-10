@@ -7,6 +7,7 @@ from tkinter import *
 from datetime import date
 
 import serial.tools.list_ports as port_list
+import matplotlib.ticker as ticker
 from matplotlib.figure import Figure 
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk) 
 import numpy as np
@@ -173,9 +174,9 @@ class App():
 
     # Create Plot #
     def plot(self, x, y, name):
-        self.fig = Figure(figsize = (14, 6), dpi = 100) 
+        self.fig = Figure(figsize = (19, 8), dpi = 100) 
         self.plot1 = self.fig.add_subplot(111)
-        self.plot1.plot(x, y) 
+        self.plot1.plot(x, y)
         self.plot1.set(xlabel="Time (s)", ylabel="Power (kW)", title=name)
         self.canvas = FigureCanvasTkAgg(self.fig, master = self.parent)   
         self.canvas.draw()
@@ -195,15 +196,24 @@ class App():
         parser.calculateWork()
         parser.calculatePower()
 
+        if (len(parser.timeList) > len(parser.powerList)):
+            x = len(parser.timeList) - len(parser.powerList)
+            parser.timeList = parser.timeList[x-1:-1]
+        elif (len(parser.timeList) < len(parser.powerList)):
+            x = len(parser.powerList) - len(parser.timeList)
+            parser.powerList = parser.powerList[x-1:-1]
+
         self.plot1.clear()
-        self.plot1.plot(parser.timeList[0:-1], parser.powerList)
+        self.plot1.plot(parser.timeList, parser.powerList)
         self.plot1.set(xlabel="Time (s)", ylabel="Power (kW)", title=name)
+        self.plot1.set_xticks(self.plot1.get_xticks()[::6])
         self.canvas.draw()
         self.canvas.get_tk_widget().pack()
         self.fig.savefig("./plots/%s.png" % filename)
 
 master = Tk()
-master.geometry("1400x800")
+master.geometry("1920x1080")
 master.title("Draguino Uno")
+
 App(master)
 mainloop()

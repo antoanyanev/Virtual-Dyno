@@ -23,6 +23,8 @@ class dataParser():
         self.works = []
         self.powerList = []
 
+        self.times_x = []
+
     def readFile(self):
         self.lines = self.file.readlines()
         for line in self.lines:
@@ -52,6 +54,7 @@ class dataParser():
                 self.elapsedSeconds += 1        
 
             self.timeList.append(str(self.elapsedSeconds) + "." + str(self.elapsedCentiseconds))
+            self.times_x.append(str(self.elapsedSeconds))
 
     def calculateDistance(self):
         for i in range(len(self.latitudes) - 1):
@@ -91,12 +94,3 @@ class dataParser():
                 self.powerList.append(p)
 
 car = Vehicle.Vehicle("VW", "GOLF MkIV 1.6SR", 1150, 3, [], 1, 0.34, 1.905)
-
-parser = dataParser("./logs/10.03.2021 15-13-18.90")
-parser.readFile()
-parser.createTimeList()
-parser.calculateDistance()
-parser.calculateAcceleration()
-parser.calculateForce(car.weight)
-parser.calculateWork()
-parser.calculatePower()
