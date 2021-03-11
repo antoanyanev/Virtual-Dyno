@@ -5,6 +5,7 @@ import dataParser
 
 from tkinter import *
 from datetime import date
+import time
 
 import serial.tools.list_ports as port_list
 import matplotlib.ticker as ticker
@@ -36,9 +37,17 @@ class App():
         self.speed = 0
         self.serialString = ""
         self.fileName = ""
+        self.p_max = 0
 
+        # Plot Data #
         self.xarr = []
         self.yarr = []
+
+        # Current Run Timer Variables #
+        self.timerState = False
+        self.startTime = 0
+        self.endTime = 0
+        self.timeCurrentRun = 0
 
         # Serial Port Object #
         self.serialPort = serial.Serial(port=self.options[0].device, baudrate=self.baudrate, bytesize=8, timeout=1, stopbits=serial.STOPBITS_ONE)        
@@ -91,21 +100,38 @@ class App():
 
     # Create Filename For Logs & Plots #
     def createFileName(self):
-        self.fileName = self.date + " " + self.time
+        self.fileName = f'{self.date} {self.time}'
         self.fileName = self.fileName.replace("/", ".")
         self.fileName = self.fileName.replace(":", "-")
 
     #Start/Stop Data Log Button Handler #
     def dataLog(self):
+        self.timer()
         self.logFlag = not self.logFlag
-        if (self.logFlag):
+        if (self.logFlag): # Start of log
             self.createFileName()
             self.logText.set("Stop Data Log")
         else:
-            self.logText.set("Start Data Log")
-            self.xarr = np.arange(0.0, 2.0, 0.01)
-            self.yarr = 1 + np.sin(2 * np.pi * self.xarr)
-            self.updatePlot(self.xarr, self.yarr, "Draguino Uno Virtual Dyno", self.fileName)
+            parser = dataParser.dataParser("./logs/%s" % self.fileName)
+            parser.readFile()
+            parser.createTimeList()
+            parser.calculateDistance()
+            parser.calculateAcceleration()
+            parser.calculateForce(dataParser.car.weight)
+            parser.calculateWork()
+            parser.calculatePower()
+
+            if (len(parser.timeList) > len(parser.powerList)):
+                x = len(parser.timeList) - len(parser.powerList)
+                parser.timeList = parser.timeList[x-1:-1]
+            elif (len(parser.timeList) < len(parser.powerList)):
+                x = len(parser.powerList) - len(parser.timeList)
+                parser.powerList = parser.powerList[x-1:-1]
+            self.p_max = max(parser.powerList)
+
+            self.logText.set("Start Data Log") # End of log
+            name = f'Draguino Uno Virtual Dyno\n Total time: {str(self.timeCurrentRun)}s\n Max Power: {round(self.p_max, 5)}kW'  
+            self.updatePlot(parser.timeList, parser.powerList, name)
 
     # Start/Pause Serial Data Button Handler #
     def dataStartStop_(self):
@@ -146,15 +172,14 @@ class App():
     def readData(self):
         self.serialPort.write(bytes.fromhex("A555FA"))
         while True:
-            self.serialString = self.serialPort.readline().decode("UTF-8").replace('\n', '').rstrip()
-            self.updateConsole(self.serialString)
             try:
+                self.serialString = self.serialPort.readline().decode("UTF-8").replace('\n', '').rstrip()
+                self.updateConsole(self.serialString)
                 self.extractData()
                 self.writeToFile()
                 self.setFixStatus()
             except:
                 print("Invalid GPS Data")
-            print(self.serialString)
         self.serialPort.close()
 
     # Start Read Data Daemon Thread #
@@ -168,7 +193,15 @@ class App():
             self.date = date.today().strftime("%d/%m/%Y")
             items = text.split(",")
             try:
-                self.consoleText.set("Date: " + self.date + ", Time: " + items[0] + ", Latitude: " + items[1] + ", Longitude: " + items[2] + ", Altitude: " + items[3] + ", hdop: " + items[4] + ", Speed: " + items[5] + "m/s")
+                time = items[0]
+                latitude = items[1]
+                longitude = items[2]
+                altitude = items[3]
+                hdop = items[4]
+                speed = items[5]
+
+                msg = "Date: " + self.date + ", Time: " + time + ", Latitude: " + latitude + ", Longitude: " + longitude + ", Altitude: " + altitude + ", hdop: " + hdop + ", Speed: " + speed + "m/s   Current run: " + str(self.timeCurrentRun) + "s"
+                self.consoleText.set(msg)
             except:
                 self.consoleText.set("Invalid GPS Data")
 
@@ -186,34 +219,28 @@ class App():
         self.canvas.get_tk_widget().pack()
 
     # Update Plot Data #
-    def updatePlot(self, x, y, name, filename):
-        parser = dataParser.dataParser("./logs/%s" % filename)
-        parser.readFile()
-        parser.createTimeList()
-        parser.calculateDistance()
-        parser.calculateAcceleration()
-        parser.calculateForce(dataParser.car.weight)
-        parser.calculateWork()
-        parser.calculatePower()
-
-        if (len(parser.timeList) > len(parser.powerList)):
-            x = len(parser.timeList) - len(parser.powerList)
-            parser.timeList = parser.timeList[x-1:-1]
-        elif (len(parser.timeList) < len(parser.powerList)):
-            x = len(parser.powerList) - len(parser.timeList)
-            parser.powerList = parser.powerList[x-1:-1]
-
+    def updatePlot(self, x, y, name):
         self.plot1.clear()
-        self.plot1.plot(parser.timeList, parser.powerList)
+        self.plot1.plot(x, y)
         self.plot1.set(xlabel="Time (s)", ylabel="Power (kW)", title=name)
         self.plot1.set_xticks(self.plot1.get_xticks()[::6])
         self.canvas.draw()
         self.canvas.get_tk_widget().pack()
         self.fig.savefig("./plots/%s.png" % filename)
 
+    def timer(self):
+        if (self.timerState):
+            self.endTime = time.time() * 1000 # End
+            self.timeCurrentRun = round(((self.endTime - self.startTime) / 1000), 2)
+            print("end")
+        else:
+            self.startTime = time.time() * 1000 # Start
+            print("start")
+        self.timerState = not self.timerState
+
 master = Tk()
 master.geometry("1920x1080")
 master.title("Draguino Uno")
-
+master.wm_state('zoomed')
 App(master)
 mainloop()

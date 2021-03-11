@@ -24,6 +24,8 @@ void loop() {
     if (gps.encode(gpsSerial.read())) {
        if (valid()) {
          displayInfo(); 
+       } else {
+         // Serial.println("Invalid Data"); 
        }
     }
   }

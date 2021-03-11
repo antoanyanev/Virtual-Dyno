@@ -54,7 +54,7 @@ class dataParser():
                 self.elapsedSeconds += 1        
 
             self.timeList.append(str(self.elapsedSeconds) + "." + str(self.elapsedCentiseconds))
-            self.times_x.append(str(self.elapsedSeconds))
+            self.times_x.append(self.elapsedSeconds)
 
     def calculateDistance(self):
         for i in range(len(self.latitudes) - 1):
