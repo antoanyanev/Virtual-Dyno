@@ -92,7 +92,8 @@ class App():
 
     # Update Serial Ports Dropdown Menu #
     def refreshPorts(self):
-        self.options = list(port_list.comports())
+        self.options = list(port_list.comports()) # Retrieve all COM ports
+        # Update Dropdown Menu #
         menu = self.opt["menu"]
         menu.delete(0, "end")
         for string in self.options:
@@ -100,51 +101,37 @@ class App():
 
     # Create Filename For Logs & Plots #
     def createFileName(self):
-        self.fileName = f'{self.date} {self.time}'
+        self.fileName = f'{self.date} {self.time}' # Create filename
+        # Reformat Filename #
         self.fileName = self.fileName.replace("/", ".")
         self.fileName = self.fileName.replace(":", "-")
 
     #Start/Stop Data Log Button Handler #
     def dataLog(self):
-        self.timer()
-        self.logFlag = not self.logFlag
+        self.timer() # Begin curent run timer
+        self.logFlag = not self.logFlag # Invert logging state flag
         if (self.logFlag): # Start of log
-            self.createFileName()
-            self.logText.set("Stop Data Log")
+            self.createFileName() # Create new filename based on date and time
+            self.logText.set("Stop Data Log") # Change data log button to stop
         else:
-            parser = dataParser.dataParser("./logs/%s" % self.fileName)
-            parser.readFile()
-            parser.createTimeList()
-            parser.calculateDistance()
-            parser.calculateAcceleration()
-            parser.calculateForce(dataParser.car.weight)
-            parser.calculateWork()
-            parser.calculatePower()
-
-            if (len(parser.timeList) > len(parser.powerList)):
-                x = len(parser.timeList) - len(parser.powerList)
-                parser.timeList = parser.timeList[x-1:-1]
-            elif (len(parser.timeList) < len(parser.powerList)):
-                x = len(parser.powerList) - len(parser.timeList)
-                parser.powerList = parser.powerList[x-1:-1]
-            self.p_max = max(parser.powerList)
-
+            xy = self.handleParser() # Retrieve plot data lists from data parser object
             self.logText.set("Start Data Log") # End of log
-            name = f'Draguino Uno Virtual Dyno\n Total time: {str(self.timeCurrentRun)}s\n Max Power: {round(self.p_max, 5)}kW'  
-            self.updatePlot(parser.timeList, parser.powerList, name)
+            name = f'Draguino Uno Virtual Dyno\n Total time: {str(self.timeCurrentRun)}s\n Max Power: {round(self.p_max, 5)}kW' # Create plot title  
+            self.updatePlot(xy[0], xy[1], name) # Update plot with new data
 
     # Start/Pause Serial Data Button Handler #
     def dataStartStop_(self):
-        if (self.dataStreamState):
+        if (self.dataStreamState): # Running
             self.dataStartStopText.set("Pause Data Stream")
-        else: 
+        else: # Paused
             self.dataStartStopText.set("Start Data Stream")
-        self.dataStreamState = not self.dataStreamState
-        self.updateConsoleFlag = not self.updateConsoleFlag
+        self.dataStreamState = not self.dataStreamState # Invert data strean flag 
+        self.updateConsoleFlag = not self.updateConsoleFlag # Invert update console flag
 
     # Extract Data From Serial String Input #
     def extractData(self):
-        parameters = self.serialString.split(",")
+        parameters = self.serialString.split(",") # Split serial string by ',' delimiter
+        # Extract all variables from serial string #
         self.time = parameters[0]
         self.latitude = parameters[1]
         self.longitude = parameters[2]
@@ -154,16 +141,16 @@ class App():
 
     # Write Data To File #
     def writeToFile(self):
-        if (self.logFlag):
-            with open("./logs/%s.csv" % self.fileName, "a") as f:
-                myList = [self.date, self.serialString]
-                lst = map(str, myList)
-                line = ",".join(lst)
-                f.write(line + "\n")
+        if (self.logFlag): # Log flag is True
+            with open("./logs/%s.csv" % self.fileName, "a") as f: # Open file with already created filename
+                myList = [self.date, self.serialString] # Create list of items to be written on a single line and append current date
+                lst = map(str, myList) # Cast all list objects to string type
+                line = ",".join(lst) # Create a string for each line with ',' delimiter
+                f.write(line + "\n") # Write line to file
 
     # GPS Fix Status Label Handler #
     def setFixStatus(self):
-        if (float(self.hdop) <= self.hdopMin):
+        if (float(self.hdop) <= self.hdopMin): # Check if current hdop value is less than the predefined minimum for "OK Fix"
             self.fixText.set("Ok")
         else:
             self.fixText.set("No Fix")
@@ -172,27 +159,28 @@ class App():
     def readData(self):
         self.serialPort.write(bytes.fromhex("A555FA"))
         while True:
-            try:
-                self.serialString = self.serialPort.readline().decode("UTF-8").replace('\n', '').rstrip()
-                self.updateConsole(self.serialString)
-                self.extractData()
-                self.writeToFile()
-                self.setFixStatus()
+            try: # Will throw an exception if program is ran while receiving serial string
+                self.serialString = self.serialPort.readline().decode("UTF-8").replace('\n', '').rstrip() # Decode to UTF-8 and remove whitespaces and new lines
+                self.updateConsole(self.serialString) # Update console label
+                self.extractData() # Extract all data from serial string into variables
+                self.writeToFile() # Write reformatted serial string as a new line
+                self.setFixStatus() # Update Fix Status Label
             except:
                 print("Invalid GPS Data")
-        self.serialPort.close()
+        self.serialPort.close() # Close Serial Port
 
     # Start Read Data Daemon Thread #
     def startReadDataThread(self):
-        self.threadingTask = threading.Thread(target=self.readData, name="Read Data Thread", daemon=True)
-        self.threadingTask.start()
+        self.threadingTask = threading.Thread(target=self.readData, name="Read Data Thread", daemon=True) # Create new task with readData function
+        self.threadingTask.start() # Start new thread
 
     # Serial Data Label Handler #
     def updateConsole(self, text):
-        if (self.updateConsoleFlag):
-            self.date = date.today().strftime("%d/%m/%Y")
-            items = text.split(",")
+        if (self.updateConsoleFlag): # Update console flag is True
+            self.date = date.today().strftime("%d/%m/%Y") # Get current date in d/m/y format
+            items = text.split(",") # Split input string into variables
             try:
+                # Extract All List Items Into Separate Variables #
                 time = items[0]
                 latitude = items[1]
                 longitude = items[2]
@@ -200,42 +188,62 @@ class App():
                 hdop = items[4]
                 speed = items[5]
 
+                # Create Console String #
                 msg = "Date: " + self.date + ", Time: " + time + ", Latitude: " + latitude + ", Longitude: " + longitude + ", Altitude: " + altitude + ", hdop: " + hdop + ", Speed: " + speed + "m/s   Current run: " + str(self.timeCurrentRun) + "s"
-                self.consoleText.set(msg)
+                self.consoleText.set(msg) # Set console string
             except:
                 self.consoleText.set("Invalid GPS Data")
 
     # Create Plot #
     def plot(self, x, y, name):
-        self.fig = Figure(figsize = (19, 8), dpi = 100) 
-        self.plot1 = self.fig.add_subplot(111)
-        self.plot1.plot(x, y)
-        self.plot1.set(xlabel="Time (s)", ylabel="Power (kW)", title=name)
-        self.canvas = FigureCanvasTkAgg(self.fig, master = self.parent)   
-        self.canvas.draw()
-        self.canvas.get_tk_widget().pack() 
-        self.toolbar = NavigationToolbar2Tk(self.canvas, self.parent) 
+        self.fig = Figure(figsize = (19, 8), dpi = 100) # Create plot figure
+        self.plot1 = self.fig.add_subplot(111) # Create subplot
+        self.plot1.plot(x, y) # Plot data from dataParser
+        self.plot1.set(xlabel="Time (s)", ylabel="Power (kW)", title=name) # Set x and y labels and title
+        self.canvas = FigureCanvasTkAgg(self.fig, master = self.parent) # Create canvas for Tkinter integration
+        self.canvas.draw() # Display canvas
+        self.canvas.get_tk_widget().pack() # Show plot
+        self.toolbar = NavigationToolbar2Tk(self.canvas, self.parent) # Create plot toolbar 
         self.toolbar.update()
-        self.canvas.get_tk_widget().pack()
+        self.canvas.get_tk_widget().pack() # Show toolbar
+
+    # Create Plot Data Lists #
+    def handleParser(self):
+        parser = dataParser.dataParser("./logs/%s" % self.fileName)
+        parser.readFile()
+        parser.createTimeList()
+        parser.calculateDistance()
+        parser.calculateAcceleration()
+        parser.calculateForce(dataParser.car.weight)
+        parser.calculateWork()
+        parser.calculatePower()
+
+        if (len(parser.timeList) > len(parser.powerList)):
+            x = len(parser.timeList) - len(parser.powerList)
+            parser.timeList = parser.timeList[x-1:-1]
+        elif (len(parser.timeList) < len(parser.powerList)):
+            x = len(parser.powerList) - len(parser.timeList)
+            parser.powerList = parser.powerList[x-1:-1]
+        self.p_max = max(parser.powerList)
+
+        return (parser.timeList, parser.powerList)
 
     # Update Plot Data #
     def updatePlot(self, x, y, name):
-        self.plot1.clear()
-        self.plot1.plot(x, y)
-        self.plot1.set(xlabel="Time (s)", ylabel="Power (kW)", title=name)
-        self.plot1.set_xticks(self.plot1.get_xticks()[::6])
-        self.canvas.draw()
-        self.canvas.get_tk_widget().pack()
-        self.fig.savefig("./plots/%s.png" % filename)
+        self.plot1.clear() # Clear currently plotted data
+        self.plot1.plot(x, y) # Plot new data
+        self.plot1.set(xlabel="Time (s)", ylabel="Power (kW)", title=name) # Update title
+        self.plot1.set_xticks(self.plot1.get_xticks()[::6]) # Show only some values on x axis
+        self.canvas.draw() # Show canvas
+        self.canvas.get_tk_widget().pack() # Show plot
+        self.fig.savefig("./plots/%s.png" % self.fileName) # Save plot to /plots directory
 
     def timer(self):
         if (self.timerState):
             self.endTime = time.time() * 1000 # End
             self.timeCurrentRun = round(((self.endTime - self.startTime) / 1000), 2)
-            print("end")
         else:
             self.startTime = time.time() * 1000 # Start
-            print("start")
         self.timerState = not self.timerState
 
 master = Tk()
