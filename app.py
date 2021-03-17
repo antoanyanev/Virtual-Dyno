@@ -2,6 +2,7 @@ import os
 import threading
 import serial
 import dataParser
+import Vehicle
 
 from tkinter import *
 from datetime import date
@@ -39,6 +40,9 @@ class App():
         self.fileName = ""
         self.p_max = 0
 
+        # Vehicle Instance For Calculations #
+        self.car = Vehicle.Vehicle("VW", "Golf Mk IV 1.6SR", 1150, 3, [], 1, 0.34, 1.905, 1.18)
+
         # Plot Data #
         self.xarr = []
         self.yarr = []
@@ -63,6 +67,8 @@ class App():
         
         # Start Serial Data Reading #
         self.startReadDataThread() 
+
+    # ------ TK Objects ------ #
 
     # Create Plot #
     def initPlot(self):
@@ -106,6 +112,8 @@ class App():
         self.opt = OptionMenu(self.parent, self.variable, self.options)
         self.opt.pack(side=TOP)
 
+    # ------ Main Logic Functions ------ #
+
     # Update Serial Ports Dropdown Menu #
     def refreshPorts(self):
         self.options = list(port_list.comports()) # Retrieve all COM ports
@@ -117,7 +125,7 @@ class App():
 
     # Create Filename For Logs & Plots #
     def createFileName(self):
-        self.fileName = f'{self.date} {self.time}' # Create filename
+        self.fileName = f'{self.car.manufac} {self.car.model} {self.date} {self.time}' # Create filename
         # Reformat Filename #
         self.fileName = self.fileName.replace("/", ".")
         self.fileName = self.fileName.replace(":", "-")
@@ -132,7 +140,7 @@ class App():
         else:
             xy = self.handleParser() # Retrieve plot data lists from data parser object
             self.logText.set("Start Data Log") # End of log
-            name = f'Draguino Uno Virtual Dyno\n Total time: {str(self.timeCurrentRun)}s\n Max Power: {round(self.p_max, 5)}kW' # Create plot title  
+            name = f'Draguino Uno Virtual Dyno\n {self.car.manufac} {self.car.model}\n Total time: {str(self.timeCurrentRun)}s\n Max Power: {round(self.p_max, 5)}kW' # Create plot title  
             self.updatePlot(xy[0], xy[1], name) # Update plot with new data
 
     # Start/Pause Serial Data Button Handler #
@@ -230,7 +238,7 @@ class App():
         parser.createTimeList()
         parser.calculateDistance()
         parser.calculateAcceleration()
-        parser.calculateForce(dataParser.car.weight)
+        parser.calculateForce(self.car.weight)
         parser.calculateWork()
         parser.calculatePower()
 

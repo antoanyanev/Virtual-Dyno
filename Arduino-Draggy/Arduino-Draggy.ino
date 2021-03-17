@@ -53,6 +53,9 @@ void displayInfo(){
     }
     Serial.print(gps.time.second());
     Serial.print(".");
+    if (gps.time.centisecond() < 10) {
+      Serial.print(F("0")); 
+    }
     Serial.print(gps.time.centisecond());
     Serial.print(",");
     

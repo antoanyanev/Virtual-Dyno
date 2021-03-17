@@ -1,6 +1,5 @@
 import math
 import geopy.distance
-import Vehicle
 
 class dataParser():
     def __init__(self, fileName):
@@ -141,6 +140,3 @@ class dataParser():
             if (float(self.timeList[i]) != 0):
                 p = self.works[i] / float(self.timeList[i]) # Calculate power
                 self.powerList.append(p) # Appends power to list
-
-# Vehicle Instance For Calculations #
-car = Vehicle.Vehicle("VW", "GOLF MkIV 1.6SR", 1150, 3, [], 1, 0.34, 1.905, 1.18)
