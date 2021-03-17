@@ -26,6 +26,12 @@ class dataParser():
         self.forces = []
         self.works = []
         self.powerList = []
+        self.altitudeChanges = []
+
+        self.applyDenivelationCompensationFlag = False
+        self.applyAirDragCompensationFlag = False
+
+        self.g = 9.81
 
         # List used for plot x_ticks #
         self.times_x = []
@@ -97,6 +103,29 @@ class dataParser():
             f = round((mass * acc), 2) # Calculate force
             self.forces.append(f) # Append force to list
 
+    def applyDenivelationCompensation(self):
+        self.applyDenivelationCompensationFlag = True
+
+    def applyAirDragCompensation(self):
+        self.applyAirDragCompensationFlag = True
+
+    def calclateAltitudeDifference(self):
+        for i in range(self.altitudes - 1):
+            dalt = self.altitudes[i] - self.altitudes[i+1]
+            self.altitudeChanges.append(dalt)
+
+    def applyCompensations(mass, cd, fa, ro):
+        if (self.applyDenivelationCompensationFlag):
+            for i in range(len(self.altitudeChanges)):
+                faltch = mass * self.g * self.altitudeChanges[i] / self.distances[i]
+                self.forces[i] += faltch
+
+        if (self.applyAirDragCompensationFlag):
+            for i in range(len(self.speeds)):
+                fad = 1/2 * ro * (maself.speeds[s] ** 2) * cd * fa
+                self.forces[i] += fad
+        
+
     # Calculate Work Needed To Move Vehicle Over A Certain Distance #
     def calculateWork(self):
         for i in range(len(self.forces)):
@@ -111,4 +140,4 @@ class dataParser():
                 self.powerList.append(p) # Appends power to list
 
 # Vehicle Instance For Calculations #
-car = Vehicle.Vehicle("VW", "GOLF MkIV 1.6SR", 1150, 3, [], 1, 0.34, 1.905)
+car = Vehicle.Vehicle("VW", "GOLF MkIV 1.6SR", 1150, 3, [], 1, 0.34, 1.905, 1.18)
