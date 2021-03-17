@@ -52,43 +52,59 @@ class App():
         # Serial Port Object #
         self.serialPort = serial.Serial(port=self.options[0].device, baudrate=self.baudrate, bytesize=8, timeout=1, stopbits=serial.STOPBITS_ONE)        
 
-        # Port Dropdown Menu #
-        self.opt = OptionMenu(self.parent, self.variable, self.options)
-        self.opt.pack(side=TOP)
+        # Create TKinter Objects #
+        self.portDropdownMenu() # Port Dropdown Menu 
+        self.refreshPortsButton() # Refresh Ports List Button
+        self.startDataLoggingButton() # Start Data Logging Button
+        self.ToggleRealTimeData() # Start/Stop Real Time Data Parsing Button
+        self.serialDataLabel() # Serial Data Label
+        self.fixStatusLabel() # Fix Status Label
+        self.initPlot() # Create Plot
+        
+        # Start Serial Data Reading #
+        self.startReadDataThread() 
 
-        # Refresh Ports List Button #
-        self.refreshButton = Button(self.parent, text = "Refresh Ports", command=self.refreshPorts)
-        self.refreshButton.pack(side=TOP)
+    # Create Plot #
+    def initPlot(self):
+        self.plot(self.xarr, self.yarr, "Draguino Uno Virtual Dyno")
 
-        # Start Data Logging Button #
-        self.logText = StringVar()
-        self.logText.set("Start Data Log")
-        self.startLogging = Button(self.parent, textvariable = self.logText, command=self.dataLog)
-        self.startLogging.pack(side=TOP)
-
-        # Start/Stop Real Time Data Parsing Button #
-        self.dataStartStopText = StringVar()
-        self.dataStartStopText.set("Pause Data Stream")
-        self.dataStartStop = Button(self.parent, textvariable = self.dataStartStopText, command=self.dataStartStop_)
-        self.dataStartStop.pack(side=TOP)
-
-        # Serial Data Label #
-        self.consoleText = StringVar()
-        self.consoleText.set("")
-        self.consoleLabel = Label(self.parent, textvariable=self.consoleText, relief=FLAT, font=("Arial", 12))
-        self.consoleLabel.pack(side=TOP)
-
-        # Fix Status Label #
+    # Fix Status Label #
+    def fixStatusLabel(self):
         self.fixText = StringVar()
         self.fixText.set("No Fix")
         self.fixLabel = Label(self.parent, textvariable=self.fixText, relief=FLAT, font=("Arial", 12))
         self.fixLabel.pack(side=TOP)
 
-        # Create Plot #
-        self.plot(self.xarr, self.yarr, "Draguino Uno Virtual Dyno")
+    # Serial Data Label #
+    def serialDataLabel(self):
+        self.consoleText = StringVar()
+        self.consoleText.set("")
+        self.consoleLabel = Label(self.parent, textvariable=self.consoleText, relief=FLAT, font=("Arial", 12))
+        self.consoleLabel.pack(side=TOP)
 
-        #Start Serial Data Reading
-        self.startReadDataThread()
+    # Start/Stop Real Time Data Parsing Button #
+    def ToggleRealTimeData(self):
+        self.dataStartStopText = StringVar()
+        self.dataStartStopText.set("Pause Data Stream")
+        self.dataStartStop = Button(self.parent, textvariable = self.dataStartStopText, command=self.dataStartStop_)
+        self.dataStartStop.pack(side=TOP)
+
+    # Start Data Logging Button #
+    def startDataLoggingButton(self):
+        self.logText = StringVar()
+        self.logText.set("Start Data Log")
+        self.startLogging = Button(self.parent, textvariable = self.logText, command=self.dataLog)
+        self.startLogging.pack(side=TOP)
+
+    # Refresh Ports List Button #
+    def refreshPortsButton(self):
+        self.refreshButton = Button(self.parent, text = "Refresh Ports", command=self.refreshPorts)
+        self.refreshButton.pack(side=TOP)
+
+    # Port Dropdown Menu #
+    def portDropdownMenu(self):
+        self.opt = OptionMenu(self.parent, self.variable, self.options)
+        self.opt.pack(side=TOP)
 
     # Update Serial Ports Dropdown Menu #
     def refreshPorts(self):
@@ -238,6 +254,7 @@ class App():
         self.canvas.get_tk_widget().pack() # Show plot
         self.fig.savefig("./plots/%s.png" % self.fileName) # Save plot to /plots directory
 
+    # Get Current Run Time #
     def timer(self):
         if (self.timerState):
             self.endTime = time.time() * 1000 # End

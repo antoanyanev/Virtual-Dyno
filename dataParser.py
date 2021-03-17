@@ -103,17 +103,21 @@ class dataParser():
             f = round((mass * acc), 2) # Calculate force
             self.forces.append(f) # Append force to list
 
+    # Appy Denivelation Compensation #
     def applyDenivelationCompensation(self):
         self.applyDenivelationCompensationFlag = True
 
+    # Apply Air Drag Compensation #
     def applyAirDragCompensation(self):
         self.applyAirDragCompensationFlag = True
 
+    # Calculate Altitude Difference #
     def calclateAltitudeDifference(self):
         for i in range(self.altitudes - 1):
             dalt = self.altitudes[i] - self.altitudes[i+1]
             self.altitudeChanges.append(dalt)
 
+    # Apply Compensations #
     def applyCompensations(mass, cd, fa, ro):
         if (self.applyDenivelationCompensationFlag):
             for i in range(len(self.altitudeChanges)):
@@ -124,7 +128,6 @@ class dataParser():
             for i in range(len(self.speeds)):
                 fad = 1/2 * ro * (maself.speeds[s] ** 2) * cd * fa
                 self.forces[i] += fad
-        
 
     # Calculate Work Needed To Move Vehicle Over A Certain Distance #
     def calculateWork(self):
