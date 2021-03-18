@@ -3,6 +3,7 @@ import threading
 import serial
 import dataParser
 import Vehicle
+import profileEditor
 
 from tkinter import *
 from datetime import date
@@ -60,7 +61,8 @@ class App():
         self.portDropdownMenu() # Port Dropdown Menu 
         self.refreshPortsButton() # Refresh Ports List Button
         self.startDataLoggingButton() # Start Data Logging Button
-        self.ToggleRealTimeData() # Start/Stop Real Time Data Parsing Button
+        self.toggleRealTimeData() # Start/Stop Real Time Data Parsing Button
+        self.editCarProfile()
         self.serialDataLabel() # Serial Data Label
         self.fixStatusLabel() # Fix Status Label
         self.initPlot() # Create Plot
@@ -88,8 +90,12 @@ class App():
         self.consoleLabel = Label(self.parent, textvariable=self.consoleText, relief=FLAT, font=("Arial", 12))
         self.consoleLabel.pack(side=TOP)
 
+    def editCarProfile(self):
+        self.editCarProfileButton = Button(self.parent, text="Open Profile Editor", command=self.openProfileEditor)
+        self.editCarProfileButton.pack(side=TOP)
+
     # Start/Stop Real Time Data Parsing Button #
-    def ToggleRealTimeData(self):
+    def toggleRealTimeData(self):
         self.dataStartStopText = StringVar()
         self.dataStartStopText.set("Pause Data Stream")
         self.dataStartStop = Button(self.parent, textvariable = self.dataStartStopText, command=self.dataStartStop_)
@@ -142,6 +148,9 @@ class App():
             self.logText.set("Start Data Log") # End of log
             name = f'Draguino Uno Virtual Dyno\n {self.car.manufac} {self.car.model}\n Total time: {str(self.timeCurrentRun)}s\n Max Power: {round(self.p_max, 5)}kW' # Create plot title  
             self.updatePlot(xy[0], xy[1], name) # Update plot with new data
+
+    def openProfileEditor(self):
+        editor = profileEditor.profileEditor()
 
     # Start/Pause Serial Data Button Handler #
     def dataStartStop_(self):
@@ -257,7 +266,7 @@ class App():
         self.plot1.clear() # Clear currently plotted data
         self.plot1.plot(x, y) # Plot new data
         self.plot1.set(xlabel="Time (s)", ylabel="Power (kW)", title=name) # Update title
-        self.plot1.set_xticks(self.plot1.get_xticks()[::6]) # Show only some values on x axis
+        self.plot1.set_xticks(self.plot1.get_xticks()[::5]) # Show only some values on x axis
         self.canvas.draw() # Show canvas
         self.canvas.get_tk_widget().pack() # Show plot
         self.fig.savefig("./plots/%s.png" % self.fileName) # Save plot to /plots directory
