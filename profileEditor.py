@@ -24,6 +24,7 @@ class profileEditor():
         self.createEntries()
         self.createProfileButton()
         self.profileDropDownMenu()
+        self.deleteSelectedProfile()
         self.refreshProfiles()
 
         self.parent.mainloop()
@@ -49,14 +50,18 @@ class profileEditor():
     # Select Current Profile Dropdown Button #
     def profileDropDownMenu(self):
         self.opt = OptionMenu(self.parent, self.variable, self.profiles)
-        self.opt.grid(column=2,row=2)
+        self.opt.grid(column=2,row=0)
+
+    def deleteSelectedProfile(self):
+        self.deleteProfileButton = Button(self.parent, text="Delete Selected Profile", command=self.deleteProfile)
+        self.deleteProfileButton.grid(column=2,row=1)
 
     # Refresh Available Profiles Options #
     def refreshProfiles(self):
         self.getProfiles()
         menu = self.opt["menu"]
         menu.delete(0, "end")
-        print(self.profiles)
+        # print(self.profiles)
         for string in self.profiles:
             menu.add_command(label=string, command=lambda value=string: self.variable.set(value))   
 
@@ -94,7 +99,20 @@ class profileEditor():
         lines = f.readlines()
         for line in lines:
             values = line.split(",")
-            newline = ", ".join(values).rstrip()
+            newline = ",".join(values).rstrip()
             self.profiles.append(newline)
+
+    def deleteProfile(self):
+        profile = self.variable.get()
+        print(profile)
+        with open("./profiles/profiles.csv", "r") as f:
+            lines = f.readlines()
+        with open("./profiles/profiles.csv", "w") as f:
+            for line in lines:
+                if (line.rstrip() != profile):
+                    print(line)
+                    f.write(line)
+        self.refreshProfiles()
+        self.variable.set(self.profiles[0])
 
 profileEditor()
