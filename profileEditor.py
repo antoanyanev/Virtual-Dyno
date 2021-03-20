@@ -22,8 +22,12 @@ class profileEditor():
         self.getProfiles() # Fet all profiles
         self.variable = StringVar(self.parent) # Create dropdown menu variable
         self.variable.trace_add("write", self.saveCurrentProfile)
-        if (len(self.profiles) > 0): # Set default value for dropdown variable
-            self.variable.set(self.profiles[0])
+
+        # Set Default Value For Dropdown Variable #
+        with open("./profiles/profile.csv", "r") as f:
+            lines = f.readlines()
+            if (len(lines) > 0):
+                self.variable.set(lines[0])
 
         # Create Tk Widgets #
         self.createEntries()
@@ -32,6 +36,7 @@ class profileEditor():
         self.deleteSelectedProfile()
         self.refreshProfiles()
 
+        # Run Tkinter App #
         self.parent.mainloop()
 
     # Create All Labels And Entries #
@@ -75,8 +80,13 @@ class profileEditor():
         self.inputs = []
         for i in range(len(self.entries)):
             text = self.entries[i].get()
+            num = self.isNumber(text)
             if (text):
-                self.inputs.append(text)
+                if (i in {2, 3, 5, 6, 7, 8}):
+                    if (self.isNumber(text)):
+                        self.inputs.append(text)
+                    else:
+                        return -1
             else:
                 return 0
 
@@ -87,16 +97,21 @@ class profileEditor():
     # Create New Vehicle Profile #
     def createNewProfile(self):
         res = self.getEntries()
-        if (not res):
-            messagebox.showinfo("Error", "Please Enter All Details!")
-        else:
+        if (res == 1):
             with open("./profiles/profiles.csv", "a") as f:
                 line = ",".join(self.inputs)
                 print(line)
                 f.write(line + "\n")
             f.close()
             self.refreshProfiles()
-
+        else:
+            msg = ""
+            if (res == 0):
+                msg = "Please Enter All Details"
+            elif (res == -1):
+                msg = "Invalid Input"
+            messagebox.showinfo("Error", msg)
+            
     # Fetch All Available Profiles #
     def getProfiles(self):
         self.profiles = []
@@ -126,5 +141,13 @@ class profileEditor():
         profile = self.variable.get()
         with open("./profiles/profile.csv", "w") as f:
             f.write(profile)
+
+    # Check If A String Is Number #
+    def isNumber(self, s):
+        try:
+            float(s)
+            return True
+        except ValueError:
+            return False
 
 profileEditor()
