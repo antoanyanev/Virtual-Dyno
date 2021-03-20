@@ -4,10 +4,13 @@ import csv
 
 class profileEditor():
     def __init__(self):
+        # Tkinter Variables #
         self.parent = Tk()
-        self.parent.geometry("1125x600")
+        self.parent.geometry("420x260")
+        self.parent.resizable(width=False, height=False)
         self.parent.title("Draguino Uno Profile Editor")
 
+        # Input Entries Variables #
         self.inputValues = []
         self.fields = ["Manufacturer", "Model", "Weight", "Gear", "Ratios", 
                        "Final Drive", "Drag Coefficient", "Frontal Area", "Air Density"]
@@ -16,11 +19,13 @@ class profileEditor():
         self.inputs = []
         self.profiles = []
 
-        self.getProfiles()
-        self.variable = StringVar(self.parent)
-        if (len(self.profiles) > 0):
+        self.getProfiles() # Fet all profiles
+        self.variable = StringVar(self.parent) # Create dropdown menu variable
+        self.variable.trace_add("write", self.saveCurrentProfile)
+        if (len(self.profiles) > 0): # Set default value for dropdown variable
             self.variable.set(self.profiles[0])
 
+        # Create Tk Widgets #
         self.createEntries()
         self.createProfileButton()
         self.profileDropDownMenu()
@@ -50,11 +55,11 @@ class profileEditor():
     # Select Current Profile Dropdown Button #
     def profileDropDownMenu(self):
         self.opt = OptionMenu(self.parent, self.variable, self.profiles)
-        self.opt.grid(column=2,row=0)
+        self.opt.grid(column=1, row=10)
 
     def deleteSelectedProfile(self):
         self.deleteProfileButton = Button(self.parent, text="Delete Selected Profile", command=self.deleteProfile)
-        self.deleteProfileButton.grid(column=2,row=1)
+        self.deleteProfileButton.grid(column=0,row=10)
 
     # Refresh Available Profiles Options #
     def refreshProfiles(self):
@@ -102,6 +107,7 @@ class profileEditor():
             newline = ",".join(values).rstrip()
             self.profiles.append(newline)
 
+    # Delete Current Profile #
     def deleteProfile(self):
         profile = self.variable.get()
         print(profile)
@@ -114,5 +120,11 @@ class profileEditor():
                     f.write(line)
         self.refreshProfiles()
         self.variable.set(self.profiles[0])
+
+    # Save Current Profile When Dropdown Option Changes #
+    def saveCurrentProfile(self, var, indx, mode):
+        profile = self.variable.get()
+        with open("./profiles/profile.csv", "w") as f:
+            f.write(profile)
 
 profileEditor()

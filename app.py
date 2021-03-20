@@ -149,6 +149,7 @@ class App():
             name = f'Draguino Uno Virtual Dyno\n {self.car.manufac} {self.car.model}\n Total time: {str(self.timeCurrentRun)}s\n Max Power: {round(self.p_max, 5)}kW' # Create plot title  
             self.updatePlot(xy[0], xy[1], name) # Update plot with new data
 
+    # Open Profile Editor Window #
     def openProfileEditor(self):
         editor = profileEditor.profileEditor()
 
