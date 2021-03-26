@@ -135,6 +135,9 @@ class App():
 
     # Create Filename For Logs & Plots #
     def createFileName(self):
+        self.getProfile()
+        values = self.profile
+        self.car = Vehicle.Vehicle(values[0], values[1], int(values[2]), int(values[3]), values[4], float(values[5]), float(values[6]), float(values[7]), float(values[8]))
         self.fileName = f'{self.car.manufac} {self.car.model} {self.date} {self.time}' # Create filename
         # Reformat Filename #
         self.fileName = self.fileName.replace("/", ".")
@@ -160,9 +163,6 @@ class App():
     def openProfileEditor(self):
         self.profileFlag = False
         editor = profileEditor.profileEditor(self.parent)
-        self.getProfile()
-        values = self.profile
-        self.car = Vehicle.Vehicle(values[0], values[1], int(values[2]), int(values[3]), values[4], float(values[5]), float(values[6]), float(values[7]), float(values[8]))
 
     # Start/Pause Serial Data Button Handler #
     def dataStartStop_(self):
@@ -265,6 +265,12 @@ class App():
         parser.calculateDistance()
         parser.calculateAcceleration()
         parser.calculateForce(self.car.weight)
+
+        # Apply Compensations #
+        # parser.applyAirDragCompensation()
+        # parser.applyDenivelationCompensation(self.car.weight, self.car.dc, self.car.fa, self.car.ro)
+        # parser.applyCompensations()
+        
         parser.calculateWork()
         parser.calculatePower()
 
@@ -297,20 +303,21 @@ class App():
             self.startTime = time.time() * 1000 # Start
         self.timerState = not self.timerState
 
+    # Retrieve Current Profile From File #
     def getProfile(self):
-        with open("./profiles/profile.csv", "r") as f:
-            lines = f.readlines()
+        with open("./profiles/profile.csv", "r") as f: # Open file
+            lines = f.readlines() # Get lines
             print(lines[0])
             if (len(lines) > 0):
-                print("tuk")
-                self.profile = lines[0].split(",")
+                self.profile = lines[0].split(",") # Set current profile
                 self.profileFlag = False
             else:
                 self.profileFlag = True
-        f.close()
+        f.close() # Close file
 
+# On Window Close Event Pop Up #
 def onClosing():
-    if messagebox.askokcancel("Quit", "Do you want to quit?"):
+    if (messagebox.askokcancel("Quit", "Do you want to quit?")):
         master.destroy()
 
 master = Tk()

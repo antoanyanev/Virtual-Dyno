@@ -1,3 +1,4 @@
+# Vehicle Class Usef For Profiles #
 class Vehicle():
     def __init__(self, manufac, model, weight, gear, ratios, final, dc, fa, ro):
         self.manufac = manufac

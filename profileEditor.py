@@ -151,7 +151,8 @@ class profileEditor():
         except ValueError:
             return False
 
+    # On Window Close Event #
     def onClosing(self):
-        self.parent.destroy()
+        self.parent.destroy() # Destroy TKinter window
 
 # profileEditor()
