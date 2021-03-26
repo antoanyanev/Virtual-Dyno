@@ -3,9 +3,9 @@ from tkinter import messagebox
 import csv
 
 class profileEditor():
-    def __init__(self):
+    def __init__(self, master):
         # Tkinter Variables #
-        self.parent = Tk()
+        self.parent = Toplevel(master)
         self.parent.geometry("420x260")
         self.parent.resizable(width=False, height=False)
         self.parent.title("Draguino Uno Profile Editor")
@@ -37,6 +37,7 @@ class profileEditor():
         self.refreshProfiles()
 
         # Run Tkinter App #
+        self.parent.protocol("WM_DELETE_WINDOW", self.onClosing)
         self.parent.mainloop()
 
     # Create All Labels And Entries #
@@ -150,4 +151,7 @@ class profileEditor():
         except ValueError:
             return False
 
-profileEditor()
+    def onClosing(self):
+        self.parent.destroy()
+
+# profileEditor()

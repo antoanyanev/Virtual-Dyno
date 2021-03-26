@@ -6,6 +6,7 @@ import Vehicle
 import profileEditor
 
 from tkinter import *
+from tkinter import messagebox
 from datetime import date
 import time
 
@@ -31,6 +32,7 @@ class App():
         self.dataStreamState = False
         self.updateConsoleFlag = True
         self.logFlag = False
+        self.profileFlag = True
 
         # Global Class Variables #
         self.baudrate = 38400
@@ -40,6 +42,8 @@ class App():
         self.serialString = ""
         self.fileName = ""
         self.p_max = 0
+
+        self.profile = []
 
         # Vehicle Instance For Calculations #
         self.car = Vehicle.Vehicle("VW", "Golf Mk IV 1.6SR", 1150, 3, [], 1, 0.34, 1.905, 1.18)
@@ -138,20 +142,27 @@ class App():
 
     #Start/Stop Data Log Button Handler #
     def dataLog(self):
-        self.timer() # Begin curent run timer
-        self.logFlag = not self.logFlag # Invert logging state flag
-        if (self.logFlag): # Start of log
-            self.createFileName() # Create new filename based on date and time
-            self.logText.set("Stop Data Log") # Change data log button to stop
+        if (self.profileFlag):
+            messagebox.showinfo("Error", "Profile Not Set")
         else:
-            xy = self.handleParser() # Retrieve plot data lists from data parser object
-            self.logText.set("Start Data Log") # End of log
-            name = f'Draguino Uno Virtual Dyno\n {self.car.manufac} {self.car.model}\n Total time: {str(self.timeCurrentRun)}s\n Max Power: {round(self.p_max, 5)}kW' # Create plot title  
-            self.updatePlot(xy[0], xy[1], name) # Update plot with new data
+            self.timer() # Begin curent run timer
+            self.logFlag = not self.logFlag # Invert logging state flag
+            if (self.logFlag): # Start of log
+                self.createFileName() # Create new filename based on date and time
+                self.logText.set("Stop Data Log") # Change data log button to stop
+            else:
+                xy = self.handleParser() # Retrieve plot data lists from data parser object
+                self.logText.set("Start Data Log") # End of log
+                name = f'Draguino Uno Virtual Dyno\n {self.car.manufac} {self.car.model}\n Total time: {str(self.timeCurrentRun)}s\n Max Power: {round(self.p_max, 5)}kW' # Create plot title  
+                self.updatePlot(xy[0], xy[1], name) # Update plot with new data
 
     # Open Profile Editor Window #
     def openProfileEditor(self):
-        editor = profileEditor.profileEditor()
+        self.profileFlag = False
+        editor = profileEditor.profileEditor(self.parent)
+        self.getProfile()
+        values = self.profile
+        self.car = Vehicle.Vehicle(values[0], values[1], int(values[2]), int(values[3]), values[4], float(values[5]), float(values[6]), float(values[7]), float(values[8]))
 
     # Start/Pause Serial Data Button Handler #
     def dataStartStop_(self):
@@ -223,7 +234,12 @@ class App():
                 speed = items[5]
 
                 # Create Console String #
-                msg = "Date: " + self.date + ", Time: " + time + ", Latitude: " + latitude + ", Longitude: " + longitude + ", Altitude: " + altitude + ", hdop: " + hdop + ", Speed: " + speed + "m/s   Current run: " + str(self.timeCurrentRun) + "s"
+                profileFlagText = ""
+                if (self.profileFlag):
+                    profileFlagText = " Profile Not Set"
+                else:
+                    profileFlagText = ""
+                msg = f'Date: {self.date}, Time: {time}, Latitude: {latitude}, Longitude: {longitude}, Altitude: {altitude}, hdop: {hdop}, Speed: {speed}m/s   Current run: {str(self.timeCurrentRun)}s {profileFlagText}'
                 self.consoleText.set(msg) # Set console string
             except:
                 self.consoleText.set("Invalid GPS Data")
@@ -281,9 +297,26 @@ class App():
             self.startTime = time.time() * 1000 # Start
         self.timerState = not self.timerState
 
+    def getProfile(self):
+        with open("./profiles/profile.csv", "r") as f:
+            lines = f.readlines()
+            print(lines[0])
+            if (len(lines) > 0):
+                print("tuk")
+                self.profile = lines[0].split(",")
+                self.profileFlag = False
+            else:
+                self.profileFlag = True
+        f.close()
+
+def onClosing():
+    if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        master.destroy()
+
 master = Tk()
 master.geometry("1920x1080")
 master.title("Draguino Uno")
 master.wm_state('zoomed')
+master.protocol("WM_DELETE_WINDOW", onClosing)
 App(master)
 mainloop()
